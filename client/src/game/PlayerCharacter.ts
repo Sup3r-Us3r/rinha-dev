@@ -83,13 +83,6 @@ export class PlayerCharacter {
         bodyY += Math.sin(this.time * 3.5) * 0.07;
         headY += Math.sin(this.time * 3.5) * 0.07;
         break;
-      case 'walk':
-        rightLegX = Math.sin(this.time * 9) * 0.7;
-        leftLegX = -Math.sin(this.time * 9) * 0.7;
-        rightArmX = -Math.sin(this.time * 9) * 0.45;
-        leftArmX = Math.sin(this.time * 9) * 0.45;
-        bodyY += Math.sin(this.time * 9) * 0.04;
-        break;
       case 'punch':
         rightArmX = -punchProgress(this.stateTime) * 1.6;
         leftArmX = 0.1;

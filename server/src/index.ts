@@ -95,6 +95,22 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('player-select-character', (payload) => {
+    const roomId = roomCodeBySocketId.get(socket.id);
+    if (!roomId) {
+      socket.emit('room-error', 'Você não está em uma sala.');
+      return;
+    }
+
+    const room = rooms.get(roomId);
+    if (!room) {
+      socket.emit('room-error', 'Sala não encontrada.');
+      return;
+    }
+
+    room.selectCharacter(socket.id, payload);
+  });
+
   socket.on('disconnect', () => {
     const roomId = roomCodeBySocketId.get(socket.id);
     roomCodeBySocketId.delete(socket.id);

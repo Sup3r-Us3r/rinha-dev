@@ -40,6 +40,10 @@ class SocketClient {
     this.socket.emit('player-input', input);
   }
 
+  selectCharacter(roomCode: string, characterId: string) {
+    this.socket.emit('player-select-character', { roomCode, characterId });
+  }
+
   playAgain() {
     this.socket.emit('play-again');
   }

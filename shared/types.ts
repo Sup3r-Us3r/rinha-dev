@@ -1,61 +1,76 @@
+export type RoomCode = string;
+
 export type AnimationState =
   | 'idle'
-  | 'walk'
   | 'punch'
   | 'kick'
   | 'hit'
+  | 'jump'
+  | 'down'
   | 'dead';
-export type PlayerId = 1 | 2;
-export type RoomCode = string;
-export type GameStatus = 'waiting' | 'playing' | 'gameover';
-
-export interface Vector2XZ {
-  x: number;
-  z: number;
-}
 
 export interface PlayerInput {
-  movement: Vector2XZ;
-  actions: {
-    punch: boolean;
-    kick: boolean;
-  };
+  left: boolean;
+  right: boolean;
+  up: boolean;
+  down: boolean;
+  punch: boolean;
+  kick: boolean;
 }
 
 export interface PlayerState {
-  socketId: string;
-  playerId: PlayerId;
-  position: Vector2XZ;
-  rotationY: number;
+  id: string;
+  characterId: string;
+  x: number;
+  y: number;
+  vy: number;
+  isGrounded: boolean;
+  facingRight: boolean;
   hp: number;
   animation: AnimationState;
-  lastAttackAt: number;
-  isDead: boolean;
+  animationTimer: number;
 }
 
 export interface GameState {
-  roomCode: RoomCode;
-  status: GameStatus;
-  players: Partial<Record<PlayerId, PlayerState>>;
-  winnerPlayerId?: PlayerId;
-  updatedAt: number;
+  players: Record<string, PlayerState>;
+  timeLeft: number;
+  status: 'waiting' | 'selecting' | 'playing' | 'finished';
+  winner?: string;
+}
+
+export interface RoomInfo {
+  code: string;
+  player1SocketId: string;
+  player2SocketId?: string;
+  characters: Record<string, string>;
+  gameState: GameState;
 }
 
 export interface RoomCreatedPayload {
   roomCode: RoomCode;
-  playerId: PlayerId;
+  playerId: string;
   state: GameState;
 }
 
 export interface RoomJoinedPayload {
   roomCode: RoomCode;
-  playerId: PlayerId;
+  playerId: string;
   state: GameState;
 }
 
 export interface GameOverPayload {
-  winnerPlayerId?: PlayerId;
+  winnerPlayerId?: string;
   state: GameState;
+}
+
+export interface CharacterSelectedPayload {
+  playerId: string;
+  characterId: string;
+}
+
+export interface BothReadyPayload {
+  player1: string;
+  player2: string;
 }
 
 export interface ClientToServerEvents {
@@ -63,6 +78,10 @@ export interface ClientToServerEvents {
   'join-room': (roomCode: RoomCode) => void;
   'player-input': (input: PlayerInput) => void;
   'play-again': () => void;
+  'player-select-character': (payload: {
+    roomCode: string;
+    characterId: string;
+  }) => void;
 }
 
 export interface ServerToClientEvents {
@@ -73,4 +92,6 @@ export interface ServerToClientEvents {
   'game-start': (state: GameState) => void;
   'game-state': (state: GameState) => void;
   'game-over': (payload: GameOverPayload) => void;
+  'character-selected': (payload: CharacterSelectedPayload) => void;
+  'both-ready': (payload: BothReadyPayload) => void;
 }
