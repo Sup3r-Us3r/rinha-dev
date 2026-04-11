@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { PlayerInput } from '../../../shared/types';
+import type { PlayerInput } from '../../../../shared/types';
 
 const KEYS = {
   W: 'KeyW',
