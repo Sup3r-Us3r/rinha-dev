@@ -17,6 +17,10 @@ const SPRITE_LOGICAL_SIZE = 240;
 const ARENA_BG_SRC = '/arenas/ex-portais.png';
 
 const FALLBACK_BY_ANIMATION: Partial<Record<AnimationState, AnimationState>> = {
+  dead: 'idle',
+  hit: 'idle',
+  punch: 'idle',
+  kick: 'idle',
   jump: 'idle',
   crouch: 'idle',
 };
@@ -129,6 +133,10 @@ export class GameScene {
     width: number,
     height: number,
   ) {
+    if (!player.characterId) {
+      return;
+    }
+
     const scale = Math.min(width / LOGICAL_WIDTH, height / LOGICAL_HEIGHT);
     const viewportWidth = LOGICAL_WIDTH * scale;
     const viewportHeight = LOGICAL_HEIGHT * scale;
@@ -146,24 +154,7 @@ export class GameScene {
       requestedAnimation,
     );
 
-    if (!sprite || !sprite.complete || sprite.naturalWidth === 0) {
-      this.ctx.save();
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      this.ctx.fillRect(
-        x - spriteSize / 2,
-        feetY - spriteSize,
-        spriteSize,
-        spriteSize,
-      );
-      this.ctx.strokeStyle = '#ffd700';
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(
-        x - spriteSize / 2,
-        feetY - spriteSize,
-        spriteSize,
-        spriteSize,
-      );
-      this.ctx.restore();
+    if (!sprite) {
       return;
     }
 
@@ -226,10 +217,40 @@ export class GameScene {
         characterId,
         animation,
       );
-      return this.getSprite(characterId, spriteAnimation);
+      return this.getBestAvailableSprite(characterId, spriteAnimation);
     }
 
-    return getWalkSprite(walkAnimator, characterId, performance.now());
+    const walkSprite = getWalkSprite(
+      walkAnimator,
+      characterId,
+      performance.now(),
+    );
+    if (walkSprite && walkSprite.complete && walkSprite.naturalWidth > 0) {
+      return walkSprite;
+    }
+
+    return this.getBestAvailableSprite(characterId, 'idle');
+  }
+
+  private getBestAvailableSprite(
+    characterId: string,
+    animation: AnimationState,
+  ): HTMLImageElement | null {
+    const sprite = this.getSprite(characterId, animation);
+    if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+      return sprite;
+    }
+
+    if (animation === 'idle') {
+      return null;
+    }
+
+    const idleSprite = this.getSprite(characterId, 'idle');
+    if (idleSprite && idleSprite.complete && idleSprite.naturalWidth > 0) {
+      return idleSprite;
+    }
+
+    return null;
   }
 
   private getWalkAnimator(playerId: string): WalkAnimator {
