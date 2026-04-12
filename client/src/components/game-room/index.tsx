@@ -124,16 +124,18 @@ const GameRoom = ({
           </label>
           <input
             id="room-code"
-            value={roomCodeInput}
             maxLength={4}
-            onChange={(event) => setRoomCodeInput(event.target.value)}
             placeholder="EX: 1234"
             className={cn(
               'w-full border border-cyan-400 bg-slate-950/90 px-4 py-3',
-              'text-sm uppercase tracking-wide text-cyan-100',
+              'text-sm uppercase tracking-wide text-cyan-100 font-sans',
               'outline-none transition placeholder:text-cyan-300/70',
               'focus:shadow-[0_0_0_0.125rem_rgba(34,211,238,0.35)]',
             )}
+            value={roomCodeInput}
+            onChange={(event) =>
+              setRoomCodeInput(event.target.value.replace(/\D/g, ''))
+            }
           />
           <button
             type="button"
