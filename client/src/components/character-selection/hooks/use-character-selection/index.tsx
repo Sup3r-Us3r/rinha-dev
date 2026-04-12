@@ -8,7 +8,7 @@ interface UseCharacterSelectionParams {
 
 interface UseCharacterSelectionResult {
   copiedRoomCode: boolean;
-  handleCharacterSelect: (characterId: string) => void;
+  handleConfirmCharacterSelection: (characterId: string) => void;
   handleCopyRoomCode: () => Promise<void>;
 }
 
@@ -19,7 +19,7 @@ const useCharacterSelection = ({
   const [copiedRoomCode, setCopiedRoomCode] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  const handleCharacterSelect = (characterId: string) => {
+  const handleConfirmCharacterSelection = (characterId: string) => {
     if (!roomCode) {
       return;
     }
@@ -51,7 +51,7 @@ const useCharacterSelection = ({
 
   return {
     copiedRoomCode,
-    handleCharacterSelect,
+    handleConfirmCharacterSelection,
     handleCopyRoomCode,
   };
 };

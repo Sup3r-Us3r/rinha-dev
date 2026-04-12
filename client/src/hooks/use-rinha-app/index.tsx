@@ -37,7 +37,9 @@ interface UseRinhaAppResult {
   hudPlayers: HudPlayers;
   errorMessage: string | null;
   mySelectedCharacterId?: string;
+  opponentSelectedCharacterId?: string;
   hasSelectedCharacter: boolean;
+  isBothPlayersReady: boolean;
   resultText: string;
   canvasRef: RefObject<HTMLCanvasElement | null>;
   createRoom: () => void;
@@ -109,6 +111,11 @@ const useRinhaApp = (): UseRinhaAppResult => {
     const onGameState = (state: GameState) => {
       setGameState(state);
       setSelectedCharacterByPlayer(getSelectedCharacterByPlayer(state));
+
+      const playerCount = Object.keys(state.players).length;
+      if (playerCount >= 2) {
+        setErrorMessage(null);
+      }
 
       if (state.status === 'playing') {
         setPhase('playing');
@@ -307,7 +314,20 @@ const useRinhaApp = (): UseRinhaAppResult => {
     ? selectedCharacterByPlayer[myPlayerId]
     : undefined;
 
+  const opponentPlayerId = myPlayerId
+    ? Object.keys(selectedCharacterByPlayer).find(
+        (playerId) => playerId !== myPlayerId,
+      )
+    : undefined;
+
+  const opponentSelectedCharacterId = opponentPlayerId
+    ? selectedCharacterByPlayer[opponentPlayerId]
+    : undefined;
+
   const hasSelectedCharacter = Boolean(mySelectedCharacterId);
+  const isBothPlayersReady = Boolean(
+    mySelectedCharacterId && opponentSelectedCharacterId,
+  );
 
   const resultText = useMemo(() => {
     if (!myPlayerId || winnerPlayerId === undefined) {
@@ -325,7 +345,9 @@ const useRinhaApp = (): UseRinhaAppResult => {
     hudPlayers,
     errorMessage,
     mySelectedCharacterId,
+    opponentSelectedCharacterId,
     hasSelectedCharacter,
+    isBothPlayersReady,
     resultText,
     canvasRef,
     createRoom,

@@ -12,7 +12,9 @@ const GamePage = () => {
     hudPlayers,
     errorMessage,
     mySelectedCharacterId,
+    opponentSelectedCharacterId,
     hasSelectedCharacter,
+    isBothPlayersReady,
     resultText,
     canvasRef,
     createRoom,
@@ -50,7 +52,9 @@ const GamePage = () => {
           roomCode={roomCode}
           errorMessage={errorMessage}
           mySelectedCharacterId={mySelectedCharacterId}
+          opponentSelectedCharacterId={opponentSelectedCharacterId}
           hasSelectedCharacter={hasSelectedCharacter}
+          isBothPlayersReady={isBothPlayersReady}
           onSelectCharacter={selectCharacter}
         />
       )}
