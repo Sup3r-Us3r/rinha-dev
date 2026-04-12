@@ -2,11 +2,12 @@ export type RoomCode = string;
 
 export type AnimationState =
   | 'idle'
+  | 'walk'
   | 'punch'
   | 'kick'
   | 'hit'
   | 'jump'
-  | 'down'
+  | 'crouch'
   | 'dead';
 
 export interface PlayerInput {

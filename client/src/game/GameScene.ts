@@ -3,16 +3,22 @@ import type {
   GameState,
   PlayerInput,
 } from '../../../shared/types';
+import {
+  createWalkAnimator,
+  getWalkSprite,
+  resetWalkAnimator,
+  type WalkAnimator,
+} from '../utils/walk-animator';
 
 const LOGICAL_WIDTH = 1000;
 const LOGICAL_HEIGHT = 600;
-const GROUND_Y = LOGICAL_HEIGHT - 100;
+const GROUND_Y = LOGICAL_HEIGHT - 50;
 const SPRITE_LOGICAL_SIZE = 240;
 const ARENA_BG_SRC = '/arenas/ex-portais.png';
 
 const FALLBACK_BY_ANIMATION: Partial<Record<AnimationState, AnimationState>> = {
   jump: 'idle',
-  down: 'idle',
+  crouch: 'idle',
 };
 
 export class GameScene {
@@ -21,6 +27,7 @@ export class GameScene {
 
   private readonly spriteCache = new Map<string, HTMLImageElement>();
   private readonly missingSprites = new Set<string>();
+  private readonly walkAnimatorByPlayerId = new Map<string, WalkAnimator>();
   private readonly backgroundImage: HTMLImageElement;
 
   private state: GameState | null = null;
@@ -58,6 +65,13 @@ export class GameScene {
 
   updateState(state: GameState) {
     this.state = state;
+
+    const activePlayerIds = new Set(Object.keys(state.players));
+    for (const [playerId] of this.walkAnimatorByPlayerId) {
+      if (!activePlayerIds.has(playerId)) {
+        this.walkAnimatorByPlayerId.delete(playerId);
+      }
+    }
   }
 
   setLocalInput(_input: PlayerInput) {
@@ -126,11 +140,11 @@ export class GameScene {
     const spriteSize = SPRITE_LOGICAL_SIZE * scale;
 
     const requestedAnimation = player.animation;
-    const spriteAnimation = this.resolveAvailableAnimation(
+    const sprite = this.getSpriteForPlayer(
+      player.id,
       player.characterId,
       requestedAnimation,
     );
-    const sprite = this.getSprite(player.characterId, spriteAnimation);
 
     if (!sprite || !sprite.complete || sprite.naturalWidth === 0) {
       this.ctx.save();
@@ -199,10 +213,43 @@ export class GameScene {
     return animation;
   }
 
-  private getSprite(characterId: string, animation: AnimationState) {
+  private getSpriteForPlayer(
+    playerId: string,
+    characterId: string,
+    animation: AnimationState,
+  ): HTMLImageElement | null {
+    const walkAnimator = this.getWalkAnimator(playerId);
+
+    if (animation !== 'walk') {
+      resetWalkAnimator(walkAnimator);
+      const spriteAnimation = this.resolveAvailableAnimation(
+        characterId,
+        animation,
+      );
+      return this.getSprite(characterId, spriteAnimation);
+    }
+
+    return getWalkSprite(walkAnimator, characterId, performance.now());
+  }
+
+  private getWalkAnimator(playerId: string): WalkAnimator {
+    const existingAnimator = this.walkAnimatorByPlayerId.get(playerId);
+    if (existingAnimator) {
+      return existingAnimator;
+    }
+
+    const animator = createWalkAnimator();
+    this.walkAnimatorByPlayerId.set(playerId, animator);
+    return animator;
+  }
+
+  private getSprite(
+    characterId: string,
+    animation: AnimationState,
+  ): HTMLImageElement | null {
     const key = this.getSpriteKey(characterId, animation);
     if (this.spriteCache.has(key)) {
-      return this.spriteCache.get(key);
+      return this.spriteCache.get(key) ?? null;
     }
 
     if (!characterId) {
@@ -225,6 +272,7 @@ export class GameScene {
 
   cleanup() {
     window.removeEventListener('resize', this.onWindowResize);
+    this.walkAnimatorByPlayerId.clear();
 
     if (this.rafId) {
       window.cancelAnimationFrame(this.rafId);

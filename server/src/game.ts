@@ -18,7 +18,7 @@ const ARENA_HORIZONTAL_MARGIN_TOTAL = 400;
 const ARENA_SIDE_MARGIN = ARENA_HORIZONTAL_MARGIN_TOTAL / 2;
 const ARENA_MIN_X = ARENA_SIDE_MARGIN;
 const ARENA_MAX_X = LOGICAL_WIDTH - ARENA_SIDE_MARGIN;
-const GROUND_Y = 500;
+const GROUND_Y = 550;
 const GRAVITY = 1.2;
 const JUMP_VELOCITY = -18;
 const MOVE_SPEED = 5;
@@ -340,26 +340,32 @@ export class GameRoom {
     const inAttack =
       (player.animation === 'punch' || player.animation === 'kick') &&
       now < meta.attackEndsAt;
+    let blockedByHit = inHit;
+    let blockedByAttack = inAttack;
 
-    if (!inHit && !inAttack) {
+    if (!blockedByHit && !blockedByAttack) {
       if (input.punch && now - meta.lastPunchAt >= PUNCH_COOLDOWN) {
         meta.lastPunchAt = now;
         meta.attackEndsAt = now + PUNCH_DURATION;
         player.animation = 'punch';
         player.animationTimer = now;
+        blockedByAttack = true;
         this.tryAttack(socketId, PUNCH_RANGE, PUNCH_DAMAGE, now);
       } else if (input.kick && now - meta.lastKickAt >= KICK_COOLDOWN) {
         meta.lastKickAt = now;
         meta.attackEndsAt = now + KICK_DURATION;
         player.animation = 'kick';
         player.animationTimer = now;
+        blockedByAttack = true;
         this.tryAttack(socketId, KICK_RANGE, KICK_DAMAGE, now);
       }
     }
 
-    if (!inHit && !inAttack) {
+    if (!blockedByHit && !blockedByAttack) {
       const moveAxis = Number(input.right) - Number(input.left);
-      if (moveAxis !== 0) {
+      const wantsToCrouch = input.down && player.isGrounded;
+
+      if (!wantsToCrouch && moveAxis !== 0) {
         player.x = clamp(
           player.x + moveAxis * MOVE_SPEED,
           ARENA_MIN_X,
@@ -367,15 +373,15 @@ export class GameRoom {
         );
       }
 
-      if (input.up && player.isGrounded) {
+      if (input.up && player.isGrounded && !wantsToCrouch) {
         player.vy = JUMP_VELOCITY;
         player.isGrounded = false;
         player.animation = 'jump';
         player.animationTimer = now;
       }
 
-      if (input.down && player.isGrounded) {
-        player.animation = 'down';
+      if (wantsToCrouch) {
+        player.animation = 'crouch';
         player.animationTimer = now;
       }
     }
@@ -397,10 +403,15 @@ export class GameRoom {
       now < meta.attackEndsAt;
 
     if (!stillInHit && !stillInAttack) {
+      const moveAxis = Number(input.right) - Number(input.left);
+      const wantsToCrouch = input.down && player.isGrounded;
+
       if (!player.isGrounded) {
         player.animation = 'jump';
-      } else if (input.down) {
-        player.animation = 'down';
+      } else if (wantsToCrouch) {
+        player.animation = 'crouch';
+      } else if (moveAxis !== 0) {
+        player.animation = 'walk';
       } else {
         player.animation = 'idle';
       }
@@ -459,11 +470,11 @@ export class GameRoom {
 
   private hitboxesOverlap(attacker: PlayerState, target: PlayerState): boolean {
     const attackerHeight =
-      attacker.animation === 'down'
+      attacker.animation === 'crouch'
         ? CROUCH_HITBOX_HEIGHT
         : STANDING_HITBOX_HEIGHT;
     const targetHeight =
-      target.animation === 'down'
+      target.animation === 'crouch'
         ? CROUCH_HITBOX_HEIGHT
         : STANDING_HITBOX_HEIGHT;
 
