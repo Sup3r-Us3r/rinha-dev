@@ -59,7 +59,7 @@ const GameOverOverlay = ({
   subtitle,
   onAction,
 }: GameOverOverlayProps) => {
-  const config = stateConfig[title];
+  const config = stateConfig[title as GameState];
 
   return (
     <section className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 p-6">
