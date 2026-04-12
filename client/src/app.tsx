@@ -1,60 +1,16 @@
-import { CharacterSelection } from './components/character-selection/index';
-import { FightStage } from './components/fight-stage/index';
-import { GameRoom } from './components/game-room/index';
-import { useRinhaApp } from './hooks/use-rinha-app';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { GamePage } from './pages/game-page/index';
+import { IntroPage } from './pages/intro-page/index';
 
 const App = () => {
-  const {
-    phase,
-    roomCode,
-    myPlayerId,
-    gameState,
-    hudPlayers,
-    errorMessage,
-    mySelectedCharacterId,
-    hasSelectedCharacter,
-    resultText,
-    canvasRef,
-    createRoom,
-    joinRoom,
-    selectCharacter,
-    playAgain,
-    setErrorMessage,
-  } = useRinhaApp();
-
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
-      {(phase === 'menu' || !myPlayerId) && (
-        <GameRoom
-          errorMessage={errorMessage}
-          onCreateRoom={createRoom}
-          onJoinRoom={joinRoom}
-          onSetErrorMessage={setErrorMessage}
-        />
-      )}
-
-      {myPlayerId && (
-        <FightStage
-          canvasRef={canvasRef}
-          gameState={gameState}
-          hudPlayers={hudPlayers}
-          phase={phase}
-          roomCode={roomCode}
-          resultText={resultText}
-          onPlayAgain={playAgain}
-        />
-      )}
-
-      {phase === 'selecting' && myPlayerId && (
-        <CharacterSelection
-          roomCode={roomCode}
-          errorMessage={errorMessage}
-          mySelectedCharacterId={mySelectedCharacterId}
-          hasSelectedCharacter={hasSelectedCharacter}
-          onSelectCharacter={selectCharacter}
-        />
-      )}
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<IntroPage />} />
+        <Route path="/game" element={<GamePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
