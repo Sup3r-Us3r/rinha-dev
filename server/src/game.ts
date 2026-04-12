@@ -456,16 +456,32 @@ export class GameRoom {
 
       if (target.hp === 0) {
         target.animation = 'dead';
+        this.io.to(this.roomCode).emit('combat-sfx', {
+          attackerPlayerId: attackerSocketId,
+          targetPlayerId: targetSocketId,
+          kind: 'death',
+        });
       } else {
         target.animation = 'hit';
         const targetMeta = this.metaBySocketId.get(targetSocketId);
         if (targetMeta) {
           targetMeta.hitEndsAt = now + HIT_DURATION;
         }
+
+        this.io.to(this.roomCode).emit('combat-sfx', {
+          attackerPlayerId: attackerSocketId,
+          targetPlayerId: targetSocketId,
+          kind: 'damage',
+        });
       }
 
-      break;
+      return;
     }
+
+    this.io.to(this.roomCode).emit('combat-sfx', {
+      attackerPlayerId: attackerSocketId,
+      kind: 'attack-missed',
+    });
   }
 
   private hitboxesOverlap(attacker: PlayerState, target: PlayerState): boolean {

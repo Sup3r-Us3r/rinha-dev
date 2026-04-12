@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { soundEffects } from '../../../../utils/sound-effects';
 
 interface UseGameRoomParams {
   onCreateRoom: () => void;
@@ -9,8 +10,8 @@ interface UseGameRoomParams {
 interface UseGameRoomResult {
   roomCodeInput: string;
   setRoomCodeInput: (roomCode: string) => void;
-  handleCreateRoom: () => void;
-  handleJoinRoom: () => void;
+  handleCreateRoom: () => Promise<void>;
+  handleJoinRoom: () => Promise<void>;
 }
 
 const useGameRoom = ({
@@ -20,12 +21,13 @@ const useGameRoom = ({
 }: UseGameRoomParams): UseGameRoomResult => {
   const [roomCodeInput, setRoomCodeInput] = useState('');
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
+    await soundEffects.unlock();
     onSetErrorMessage(null);
     onCreateRoom();
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     const sanitizedRoomCode = roomCodeInput.trim();
 
     if (!sanitizedRoomCode) {
@@ -33,6 +35,7 @@ const useGameRoom = ({
       return;
     }
 
+    await soundEffects.unlock();
     onSetErrorMessage(null);
     onJoinRoom(sanitizedRoomCode);
   };

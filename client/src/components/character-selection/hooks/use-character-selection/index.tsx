@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { soundEffects } from '../../../../utils/sound-effects';
 
 interface UseCharacterSelectionParams {
   roomCode: string;
@@ -23,6 +24,7 @@ const useCharacterSelection = ({
       return;
     }
 
+    void soundEffects.unlock();
     onSelectCharacter(characterId);
   };
 

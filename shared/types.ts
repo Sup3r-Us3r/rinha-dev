@@ -74,6 +74,14 @@ export interface BothReadyPayload {
   player2: string;
 }
 
+export type CombatSfxKind = 'attack-missed' | 'damage' | 'death';
+
+export interface CombatSfxPayload {
+  attackerPlayerId: string;
+  targetPlayerId?: string;
+  kind: CombatSfxKind;
+}
+
 export interface ClientToServerEvents {
   'create-room': () => void;
   'join-room': (roomCode: RoomCode) => void;
@@ -95,4 +103,5 @@ export interface ServerToClientEvents {
   'game-over': (payload: GameOverPayload) => void;
   'character-selected': (payload: CharacterSelectedPayload) => void;
   'both-ready': (payload: BothReadyPayload) => void;
+  'combat-sfx': (payload: CombatSfxPayload) => void;
 }

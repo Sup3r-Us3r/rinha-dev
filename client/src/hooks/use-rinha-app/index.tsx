@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type {
+  CombatSfxPayload,
   GameOverPayload,
   GameState,
   PlayerInput,
@@ -15,6 +16,7 @@ import {
   resolveHudPlayersFromState,
   type HudPlayers,
 } from '../../utils/game-state';
+import { soundEffects } from '../../utils/sound-effects';
 
 type UiPhase = 'menu' | 'selecting' | 'playing' | 'gameover';
 
@@ -61,7 +63,14 @@ const useRinhaApp = (): UseRinhaAppResult => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<GameScene | null>(null);
+  const myPlayerIdRef = useRef<string | null>(null);
+  const previousGameStateRef = useRef<GameState | null>(null);
+  const previousPhaseRef = useRef<UiPhase>('menu');
   const input = useGameInput();
+
+  useEffect(() => {
+    myPlayerIdRef.current = myPlayerId;
+  }, [myPlayerId]);
 
   useEffect(() => {
     socketClient.connect();
@@ -94,6 +103,7 @@ const useRinhaApp = (): UseRinhaAppResult => {
       setErrorMessage(null);
       setPhase('playing');
       setHudPlayers(resolveHudPlayersFromState(state));
+      void soundEffects.play('round-1');
     };
 
     const onGameState = (state: GameState) => {
@@ -136,6 +146,34 @@ const useRinhaApp = (): UseRinhaAppResult => {
       setErrorMessage(null);
     };
 
+    const onCombatSfx = (payload: CombatSfxPayload) => {
+      const localPlayerId = myPlayerIdRef.current;
+      if (!localPlayerId) {
+        return;
+      }
+
+      if (payload.kind === 'death') {
+        void soundEffects.play('deadth');
+        return;
+      }
+
+      if (
+        payload.kind === 'damage' &&
+        payload.targetPlayerId &&
+        payload.targetPlayerId !== localPlayerId
+      ) {
+        void soundEffects.play('damage');
+        return;
+      }
+
+      if (
+        payload.kind === 'attack-missed' &&
+        payload.attackerPlayerId === localPlayerId
+      ) {
+        void soundEffects.play('hit');
+      }
+    };
+
     socketClient.socket.on('room-created', onRoomCreated);
     socketClient.socket.on('room-joined', onRoomJoined);
     socketClient.socket.on('room-error', onRoomError);
@@ -145,6 +183,7 @@ const useRinhaApp = (): UseRinhaAppResult => {
     socketClient.socket.on('player-left', onPlayerLeft);
     socketClient.socket.on('character-selected', onCharacterSelected);
     socketClient.socket.on('both-ready', onBothReady);
+    socketClient.socket.on('combat-sfx', onCombatSfx);
 
     return () => {
       socketClient.socket.off('room-created', onRoomCreated);
@@ -156,9 +195,22 @@ const useRinhaApp = (): UseRinhaAppResult => {
       socketClient.socket.off('player-left', onPlayerLeft);
       socketClient.socket.off('character-selected', onCharacterSelected);
       socketClient.socket.off('both-ready', onBothReady);
+      socketClient.socket.off('combat-sfx', onCombatSfx);
       socketClient.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      phase === 'selecting' &&
+      previousPhaseRef.current !== 'selecting' &&
+      myPlayerId
+    ) {
+      // no-op: character-selection audio removed
+    }
+
+    previousPhaseRef.current = phase;
+  }, [myPlayerId, phase]);
 
   useEffect(() => {
     if (!canvasRef.current || !myPlayerId) {
@@ -179,7 +231,24 @@ const useRinhaApp = (): UseRinhaAppResult => {
       return;
     }
 
+    // detect animation transitions (e.g. jump) to trigger sfx
+    const prev = previousGameStateRef.current;
+    if (prev) {
+      for (const [playerId, player] of Object.entries(gameState.players)) {
+        const prevPlayer = prev.players[playerId];
+        if (!prevPlayer) continue;
+
+        // play jump sound when animation just changed to 'jump'
+        if (player.animation === 'jump' && prevPlayer.animation !== 'jump') {
+          void soundEffects.play('jump');
+        }
+      }
+    }
+
     sceneRef.current.updateState(gameState);
+
+    // store current state for next comparison
+    previousGameStateRef.current = gameState;
   }, [gameState]);
 
   useEffect(() => {

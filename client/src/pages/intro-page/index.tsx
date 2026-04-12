@@ -1,9 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import { soundEffects } from '../../utils/sound-effects';
 
 const IntroPage = () => {
   const navigate = useNavigate();
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
+    await soundEffects.unlock();
+    await soundEffects.play('start');
     navigate('/game');
   };
 
@@ -24,7 +27,9 @@ const IntroPage = () => {
         <button
           type="button"
           className="arcade-start-button"
-          onClick={handleStartGame}
+          onClick={() => {
+            void handleStartGame();
+          }}
         >
           COMEÇAR
         </button>

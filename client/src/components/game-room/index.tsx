@@ -30,7 +30,9 @@ const GameRoom = ({
 
         <button
           type="button"
-          onClick={handleCreateRoom}
+          onClick={() => {
+            void handleCreateRoom();
+          }}
           className="mb-6 w-full rounded-lg bg-emerald-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
         >
           Criar Sala
@@ -50,7 +52,9 @@ const GameRoom = ({
           />
           <button
             type="button"
-            onClick={handleJoinRoom}
+            onClick={() => {
+              void handleJoinRoom();
+            }}
             className="w-full rounded-lg bg-sky-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-sky-400"
           >
             Entrar na Sala
