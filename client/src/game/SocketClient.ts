@@ -13,6 +13,8 @@ class SocketClient {
   constructor() {
     this.socket = io(SERVER_URL, {
       autoConnect: false,
+      transports: ['websocket'],
+      upgrade: false,
     });
   }
 
