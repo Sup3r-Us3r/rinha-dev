@@ -1,5 +1,73 @@
 @import 'tailwindcss';
 
+@keyframes arcade-flicker {
+  0% {
+    opacity: 0.16;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  20% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 0.34;
+  }
+  40% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.26;
+  }
+  60% {
+    opacity: 0.19;
+  }
+  70% {
+    opacity: 0.3;
+  }
+  80% {
+    opacity: 0.22;
+  }
+  90% {
+    opacity: 0.28;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes arcade-scan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+@theme {
+  --animate-arcade-flicker: arcade-flicker 1.8s steps(2, end) infinite;
+}
+
+.arcade-scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(0, 0, 0, 0.12) 50%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 100% 6px;
+  opacity: 0.35;
+  animation: arcade-scan 9s linear infinite;
+}
+
 @layer components {
   .arcade-start-button {
     @apply min-w-56 cursor-pointer uppercase;
