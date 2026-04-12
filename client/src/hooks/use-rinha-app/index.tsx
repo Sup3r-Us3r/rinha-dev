@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   CombatSfxPayload,
   GameOverPayload,
@@ -10,13 +10,13 @@ import type {
 } from '../../../../shared/types';
 import { GameScene } from '../../game/GameScene';
 import { socketClient } from '../../game/SocketClient';
-import { useGameInput } from '../use-game-input';
 import {
   getSelectedCharacterByPlayer,
   resolveHudPlayersFromState,
   type HudPlayers,
 } from '../../utils/game-state';
 import { soundEffects } from '../../utils/sound-effects';
+import { useGameInput } from '../use-game-input';
 
 type UiPhase = 'menu' | 'selecting' | 'playing' | 'gameover';
 
@@ -336,5 +336,5 @@ const useRinhaApp = (): UseRinhaAppResult => {
   };
 };
 
-export type { UiPhase };
 export { useRinhaApp };
+export type { UiPhase };

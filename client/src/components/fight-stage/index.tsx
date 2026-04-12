@@ -60,15 +60,8 @@ const FightStage = ({
         <GameOverOverlay
           title={resultText}
           subtitle="Clique para começar uma nova rodada com o mesmo oponente."
-        >
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className="mt-4 rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-emerald-400"
-          >
-            Jogar Novamente
-          </button>
-        </GameOverOverlay>
+          onAction={onPlayAgain}
+        />
       )}
     </>
   );
