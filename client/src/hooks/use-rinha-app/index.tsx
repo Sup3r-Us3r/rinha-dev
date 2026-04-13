@@ -65,14 +65,10 @@ const useRinhaApp = (): UseRinhaAppResult => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<GameScene | null>(null);
-  const myPlayerIdRef = useRef<string | null>(null);
+  const roundStartPlayedRef = useRef(false);
   const previousGameStateRef = useRef<GameState | null>(null);
   const previousPhaseRef = useRef<UiPhase>('menu');
   const input = useGameInput();
-
-  useEffect(() => {
-    myPlayerIdRef.current = myPlayerId;
-  }, [myPlayerId]);
 
   useEffect(() => {
     socketClient.connect();
@@ -81,6 +77,7 @@ const useRinhaApp = (): UseRinhaAppResult => {
       setRoomCode(payload.roomCode);
       setMyPlayerId(payload.playerId);
       setGameState(payload.state);
+      roundStartPlayedRef.current = payload.state.status === 'playing';
       setWinnerPlayerId(undefined);
       setErrorMessage(null);
       setPhase(payload.state.status === 'playing' ? 'playing' : 'selecting');
@@ -99,13 +96,23 @@ const useRinhaApp = (): UseRinhaAppResult => {
       setErrorMessage(message);
     };
 
+    const playRoundStartSfx = () => {
+      if (roundStartPlayedRef.current) {
+        return;
+      }
+
+      roundStartPlayedRef.current = true;
+      void soundEffects.play('round-1');
+    };
+
     const onGameStart = (state: GameState) => {
       setGameState(state);
       setWinnerPlayerId(undefined);
       setErrorMessage(null);
       setPhase('playing');
       setHudPlayers(resolveHudPlayersFromState(state));
-      void soundEffects.play('round-1');
+      roundStartPlayedRef.current = false;
+      playRoundStartSfx();
     };
 
     const onGameState = (state: GameState) => {
@@ -120,10 +127,13 @@ const useRinhaApp = (): UseRinhaAppResult => {
       if (state.status === 'playing') {
         setPhase('playing');
         setHudPlayers(resolveHudPlayersFromState(state));
+        playRoundStartSfx();
       } else if (state.status === 'finished') {
         setPhase('gameover');
+        roundStartPlayedRef.current = false;
       } else if (state.status === 'selecting' || state.status === 'waiting') {
         setPhase('selecting');
+        roundStartPlayedRef.current = false;
       }
     };
 
@@ -131,12 +141,14 @@ const useRinhaApp = (): UseRinhaAppResult => {
       setGameState(payload.state);
       setWinnerPlayerId(payload.winnerPlayerId);
       setPhase('gameover');
+      roundStartPlayedRef.current = false;
     };
 
     const onPlayerLeft = () => {
       setErrorMessage('O outro jogador saiu. Aguardando novo oponente...');
       setPhase('selecting');
       setHudPlayers({});
+      roundStartPlayedRef.current = false;
     };
 
     const onCharacterSelected = (payload: {
@@ -154,29 +166,17 @@ const useRinhaApp = (): UseRinhaAppResult => {
     };
 
     const onCombatSfx = (payload: CombatSfxPayload) => {
-      const localPlayerId = myPlayerIdRef.current;
-      if (!localPlayerId) {
-        return;
-      }
-
       if (payload.kind === 'death') {
         void soundEffects.play('deadth');
         return;
       }
 
-      if (
-        payload.kind === 'damage' &&
-        payload.targetPlayerId &&
-        payload.targetPlayerId !== localPlayerId
-      ) {
+      if (payload.kind === 'damage') {
         void soundEffects.play('damage');
         return;
       }
 
-      if (
-        payload.kind === 'attack-missed' &&
-        payload.attackerPlayerId === localPlayerId
-      ) {
+      if (payload.kind === 'attack-missed') {
         void soundEffects.play('hit');
       }
     };
