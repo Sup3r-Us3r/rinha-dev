@@ -64,6 +64,7 @@ export class GameRoom {
 
   private readonly playerSlotBySocketId = new Map<string, PlayerSlot>();
   private readonly inputBySocketId = new Map<string, PlayerInput>();
+  private readonly queuedInputBySocketId = new Map<string, PlayerInput>();
   private readonly metaBySocketId = new Map<string, PlayerMeta>();
 
   private updateInterval: NodeJS.Timeout | null = null;
@@ -111,6 +112,7 @@ export class GameRoom {
 
     this.playerSlotBySocketId.set(socket.id, slot);
     this.inputBySocketId.set(socket.id, { ...EMPTY_INPUT });
+    this.queuedInputBySocketId.set(socket.id, { ...EMPTY_INPUT });
     this.metaBySocketId.set(socket.id, this.createPlayerMeta());
     this.roomInfo.gameState.players[socket.id] = this.createPlayerState(
       socket.id,
@@ -126,7 +128,19 @@ export class GameRoom {
         return;
       }
 
-      this.inputBySocketId.set(socket.id, sanitizeInput(rawInput));
+      const latestInput = sanitizeInput(rawInput);
+      this.inputBySocketId.set(socket.id, latestInput);
+
+      const queuedInput =
+        this.queuedInputBySocketId.get(socket.id) ?? EMPTY_INPUT;
+      this.queuedInputBySocketId.set(socket.id, {
+        left: queuedInput.left || latestInput.left,
+        right: queuedInput.right || latestInput.right,
+        up: queuedInput.up || latestInput.up,
+        down: queuedInput.down || latestInput.down,
+        punch: queuedInput.punch || latestInput.punch,
+        kick: queuedInput.kick || latestInput.kick,
+      });
     });
 
     socket.on('play-again', () => {
@@ -161,6 +175,7 @@ export class GameRoom {
 
     this.playerSlotBySocketId.delete(socketId);
     this.inputBySocketId.delete(socketId);
+    this.queuedInputBySocketId.delete(socketId);
     this.metaBySocketId.delete(socketId);
 
     delete this.roomInfo.characters[socketId];
@@ -279,6 +294,8 @@ export class GameRoom {
 
     this.inputBySocketId.set(p1SocketId, { ...EMPTY_INPUT });
     this.inputBySocketId.set(p2SocketId, { ...EMPTY_INPUT });
+    this.queuedInputBySocketId.set(p1SocketId, { ...EMPTY_INPUT });
+    this.queuedInputBySocketId.set(p2SocketId, { ...EMPTY_INPUT });
     this.metaBySocketId.set(p1SocketId, this.createPlayerMeta());
     this.metaBySocketId.set(p2SocketId, this.createPlayerMeta());
 
@@ -329,7 +346,16 @@ export class GameRoom {
 
   private updatePlayer(socketId: string, now: number): void {
     const player = this.roomInfo.gameState.players[socketId];
-    const input = this.inputBySocketId.get(socketId) ?? EMPTY_INPUT;
+    const latestInput = this.inputBySocketId.get(socketId) ?? EMPTY_INPUT;
+    const queuedInput = this.queuedInputBySocketId.get(socketId) ?? EMPTY_INPUT;
+    const input: PlayerInput = {
+      left: latestInput.left || queuedInput.left,
+      right: latestInput.right || queuedInput.right,
+      up: latestInput.up || queuedInput.up,
+      down: latestInput.down || queuedInput.down,
+      punch: latestInput.punch || queuedInput.punch,
+      kick: latestInput.kick || queuedInput.kick,
+    };
     const meta = this.metaBySocketId.get(socketId);
 
     if (!player || !meta || player.animation === 'dead') {
@@ -416,6 +442,8 @@ export class GameRoom {
         player.animation = 'idle';
       }
     }
+
+    this.queuedInputBySocketId.set(socketId, { ...EMPTY_INPUT });
   }
 
   private tryAttack(

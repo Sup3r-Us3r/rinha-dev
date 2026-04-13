@@ -18,6 +18,11 @@ app.get('/health', (_req, res) => {
 const server = http.createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: { origin: '*' },
+  transports: ['websocket'],
+  allowUpgrades: false,
+  perMessageDeflate: false,
+  pingInterval: 20000,
+  pingTimeout: 10000,
 });
 
 const rooms: Map<RoomCode, GameRoom> = new Map();
